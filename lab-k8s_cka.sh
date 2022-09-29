@@ -1,19 +1,36 @@
 #1. k8s-master에 ubuntu로 로그인후 실습 디렉토리 생성
 sudo mkdir -p /data/{cka,ckad,cks} /var/CKA2022/ 
+sudo apt update
+sudo apt install wget curl tree -y
 
-#2. ssh key 전달
+#2. ubuntu사용자의 ssh 인증서를 생성한 후 인증 key 전달
+master's ubuntu 사용자가 패스워드 인증 없이 node1, node2 에 로그인 허용
+==============
+*node1,2에 root로 로그인
+$ sudo -i
+# vi /etc/ssh/sshd_config
+34 PermitRootLogin yes
+58 PasswordAuthentication yes
+# systemctl restart sshd
+==================
 ssh-keygen -t rsa
-ssh-copy-id k8s-node1
-ssh-copy-id k8s-node2
+ssh-copy-id node1
+ssh-copy-id node2
+
+#TEST
+ssh node1
+ssh node2
+
 
 #3. Node에 label 설정
-kubectl label node k8s-worker1 disktype=ssd gpu=true
+kubectl label node node1 disktype=ssd gpu=true
+kubectl label node node2 disktype=std
+kubectl get node -L disktype,gpu
 
 
 #4. Host Volume 생성
-# k8s-worker1, 2에 미리 작업
-ssh k8s-worker1 sudo mkdir -p /data/{app-data,volume,storage,cka} /app/storage/storage{1,2,3}
-ssh k8s-worker2 sudo mkdir -p /data/{app-data,volume,storage,cka} /app/storage/storage{1,2,3}
+# node1, 2에 미리 작업
+mkdir -p /data/{app-data,volume,storage,cka} /app/storage/storage{1,2,3}
 
 
 #5. 시험준비 환경 구성
@@ -336,12 +353,8 @@ sudo mv etcd etcdctl etcdutl /usr/local/bin
 etcd --version
 cd
 
-sudo ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
-   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-   --cert=/etc/kubernetes/pki/etcd/server.crt \
-   --key=/etc/kubernetes/pki/etcd/server.key \
-   snapshot save //data/etcd-snapshot-previous.db
 
+===END==
 
 
 
