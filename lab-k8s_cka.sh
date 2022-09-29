@@ -1,7 +1,11 @@
-#1. k8s-master에 ubuntu로 로그인후 실습 디렉토리 생성
+# data: 20220930
+# Kubernetes Version 1.24, 1.25
+
+#1. master에 ubuntu로 로그인후 실습 디렉토리 생성
 sudo mkdir -p /data/{cka,ckad,cks} /var/CKA2022/ 
 sudo apt update
 sudo apt install wget curl tree -y
+
 
 #2. ubuntu사용자의 ssh 인증서를 생성한 후 인증 key 전달
 master's ubuntu 사용자가 패스워드 인증 없이 node1, node2 에 로그인 허용
@@ -12,8 +16,17 @@ $ sudo -i
 34 PermitRootLogin yes
 58 PasswordAuthentication yes
 # systemctl restart sshd
-==================
+
+* ubuntu user의 패스워드 설정
+# passwd ubuntu
+
+
+=====Master====
 ssh-keygen -t rsa
+<ENTER>
+<ENTER>
+<ENTER>
+
 ssh-copy-id node1
 ssh-copy-id node2
 
@@ -32,7 +45,7 @@ kubectl get node -L disktype,gpu
 # node1, 2에 미리 작업
 mkdir -p /data/{app-data,volume,storage,cka} /app/storage/storage{1,2,3}
 
-
+====CKA에서만========
 #5. 시험준비 환경 구성
 cat <<EOF | kubectl apply -f -
 ---
@@ -357,21 +370,24 @@ sudo ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
    --cert=/etc/kubernetes/pki/etcd/server.crt \
    --key=/etc/kubernetes/pki/etcd/server.key \
-   snapshot save //data/etcd-snapshot-previous.db
+   snapshot save /data/etcd-snapshot-previous.db
 
 
 #7. Metrics-Server 설치 : https://github.com/kubernetes-sigs/metrics-server
 # kubectl top 명령어 실행을 위해 구성
-wget -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+wget  https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 vi components.yaml
 ..
---kubelet-insecure-tls
-..
+      containers:
+      - args:
+        - --cert-dir=/tmp
+        - --secure-port=4443
+        - --kubelet-insecure-tls
+
 kubectl apply -f components.yaml
 
 ===END===
 
-===END==
 
 
 
