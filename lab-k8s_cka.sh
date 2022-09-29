@@ -1,32 +1,22 @@
-
-#1. k8s-master에 ubuntu로 로그인
+#1. k8s-master에 ubuntu로 로그인후 실습 디렉토리 생성
+sudo mkdir -p /data/{cka,ckad,cks} /var/CKA2022/ 
 
 #2. ssh key 전달
 ssh-keygen -t rsa
 ssh-copy-id k8s-node1
 ssh-copy-id k8s-node2
 
-#3. etcd 설치
-export RELEASE=$(curl -s https://api.github.com/repos/etcd-io/etcd/releases/latest|grep tag_name | cut -d '"' -f 4)
-wget https://github.com/etcd-io/etcd/releases/download/${RELEASE}/etcd-${RELEASE}-linux-amd64.tar.gz
-tar xf etcd-${RELEASE}-linux-amd64.tar.gz
-cd etcd-${RELEASE}-linux-amd64
-sudo mv etcd etcdctl etcdutl /usr/local/bin
-etcd --version
-cd
-
-#4. Node에 label 설정
+#3. Node에 label 설정
 kubectl label node k8s-worker1 disktype=ssd gpu=true
-kubectl label node k8s-worker2 disktype=std
-sudo mkdir -p /data/{cka,ckad,cks} /var/CKA2022/ 
 
-#5. Host Volume 생성
+
+#4. Host Volume 생성
 # k8s-worker1, 2에 미리 작업
 ssh k8s-worker1 sudo mkdir -p /data/{app-data,volume,storage,cka} /app/storage/storage{1,2,3}
 ssh k8s-worker2 sudo mkdir -p /data/{app-data,volume,storage,cka} /app/storage/storage{1,2,3}
 
 
-#6. 시험준비 환경 구성
+#5. 시험준비 환경 구성
 cat <<EOF | kubectl apply -f -
 ---
 apiVersion: v1
@@ -336,6 +326,22 @@ spec:
     args: ["-c", "while true; do sleep 1000; done"]
 
 EOF
+
+#6. etcd 설치
+export RELEASE=$(curl -s https://api.github.com/repos/etcd-io/etcd/releases/latest|grep tag_name | cut -d '"' -f 4)
+wget https://github.com/etcd-io/etcd/releases/download/${RELEASE}/etcd-${RELEASE}-linux-amd64.tar.gz
+tar xf etcd-${RELEASE}-linux-amd64.tar.gz
+cd etcd-${RELEASE}-linux-amd64
+sudo mv etcd etcdctl etcdutl /usr/local/bin
+etcd --version
+cd
+
+sudo ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
+   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+   --cert=/etc/kubernetes/pki/etcd/server.crt \
+   --key=/etc/kubernetes/pki/etcd/server.key \
+   snapshot save //data/etcd-snapshot-previous.db
+
 
 
 
