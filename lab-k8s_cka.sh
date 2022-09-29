@@ -359,6 +359,18 @@ sudo ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
    --key=/etc/kubernetes/pki/etcd/server.key \
    snapshot save //data/etcd-snapshot-previous.db
 
+
+#7. Metrics-Server 설치 : https://github.com/kubernetes-sigs/metrics-server
+# kubectl top 명령어 실행을 위해 구성
+wget -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+vi components.yaml
+..
+--kubelet-insecure-tls
+..
+kubectl apply -f components.yaml
+
+===END===
+
 ===END==
 
 
